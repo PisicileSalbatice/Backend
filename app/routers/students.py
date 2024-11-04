@@ -7,6 +7,7 @@ from ..schemas import Exam  # Importăm schema Exam pentru a specifica tipul de 
 
 router = APIRouter()
 
+
 @router.get("/students/exams/", response_model=List[Exam])
 def get_exams_for_student(student_id: str, db: Session = Depends(get_db)):
     return get_student_exams(db=db, student_id=student_id)
