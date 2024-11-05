@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
-from app import models, schemas, crud
+from app import models, schemas, crud, notifications
 from app.database import get_db
 from app.routers.auth import get_current_user 
 
@@ -53,15 +53,20 @@ def get_exam_requests(
 @router.put("/requests/{request_id}/status")
 def update_exam_request_status(
     request_id: int,
-    status: str,  # Expected values: "approved" or "rejected"
+    status: str,  # "approved" sau "rejected"
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
 ):
-    # Verifică dacă utilizatorul este profesor
+    # Verificăm dacă utilizatorul este profesor
     if current_user.role != "professor":
-        raise HTTPException(status_code=403, detail="Only professors can approve or reject exam requests")
+        raise HTTPException(status_code=403, detail="Doar profesorii pot actualiza statusul cererilor")
 
+    # Actualizăm statusul cererii de examen
     updated_request = crud.update_exam_request_status(db=db, request_id=request_id, status=status)
     if not updated_request:
-        raise HTTPException(status_code=404, detail="Exam request not found")
-    return {"message": "Exam request status updated successfully", "status": status}
+        raise HTTPException(status_code=404, detail="Cererea de examen nu a fost găsită")
+
+    # Trimitem notificare studentului
+    notifications.notify_student_of_status(updated_request.student.email, status)
+
+    return {"message": f"Statusul cererii a fost actualizat la {status}", "status": status}

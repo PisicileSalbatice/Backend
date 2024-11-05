@@ -2,7 +2,7 @@ from sqlalchemy.orm import Session
 from . import models, schemas
 from typing import List, Optional
 from datetime import datetime
-
+from app.models import ExamRequest
 
 # Login: checks email and password
 def login_user(db: Session, email: str, password: str) -> Optional[models.User]:
@@ -52,8 +52,8 @@ def get_exam_requests(db: Session, student_id: int = None, professor_id: int = N
         query = query.filter(models.ExamRequest.professor_id == professor_id)
     return query.all()
 
-def update_exam_request_status(db: Session, request_id: int, status: str):
-    exam_request = db.query(models.ExamRequest).filter(models.ExamRequest.id == request_id).first()
+def update_exam_request_status(db: Session, request_id: int, status: str) -> ExamRequest:
+    exam_request = db.query(ExamRequest).filter(ExamRequest.id == request_id).first()
     if exam_request:
         exam_request.status = status
         db.commit()
