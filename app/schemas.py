@@ -56,7 +56,7 @@ class ExamRequestCreate(BaseModel):
 
     class Config:
         from_attributes = True
-        
+
 class SettingsUpdate(BaseModel):
     notificationPreferences: Optional[str] = None
     language: Optional[str] = None
@@ -71,4 +71,4 @@ class LoginRequest(BaseModel):
 
 class LoginResponse(BaseModel):
     access_token: str
-    token_type: str = "bearer"
+    token_type: str 

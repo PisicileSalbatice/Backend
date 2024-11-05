@@ -7,9 +7,9 @@ from datetime import datetime, timedelta
 from passlib.context import CryptContext
 from fastapi.security import OAuth2PasswordBearer
 
-router = APIRouter()
+router = APIRouter(prefix="/auth", tags=["Authentication"])
 
-SECRET_KEY = "your_secret_key"
+SECRET_KEY = "your_secret_key"  # Schimbă cu cheia ta secretă
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
@@ -52,6 +52,7 @@ def login_for_access_token(form_data: schemas.LoginRequest, db: Session = Depend
     access_token = create_access_token(
         data={"sub": user.email}, expires_delta=access_token_expires
     )
+    print(f"Email: {form_data.email}, Password: {form_data.password}")
     return {"access_token": access_token, "token_type": "bearer"}
 
 def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
@@ -75,4 +76,3 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
 def read_student_exams(current_user: models.User = Depends(get_current_user)):
     # Endpoint logic for authorized users
     return {"msg": "Authorized access to student exams"}
-
