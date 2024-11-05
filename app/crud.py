@@ -13,6 +13,11 @@ def login_user(db: Session, email: str, password: str) -> Optional[models.User]:
     )
 
 
+# crud.py
+
+def get_exams(db: Session):
+    return db.query(models.Exam).all()
+
 # Fetch all exams associated with a specific student through their requests
 def get_student_exams(db: Session, student_id: int) -> List[models.Exam]:
     return (
@@ -110,3 +115,14 @@ def update_user_settings(
     db.commit()
     db.refresh(user)
     return {"message": "Settings updated successfully"}
+
+def create_exam(db: Session, exam: schemas.ExamCreate):
+    db_exam = models.Exam(
+        subject=exam.subject,
+        date=exam.date,
+        professor_id=exam.professor_id
+    )
+    db.add(db_exam)
+    db.commit()
+    db.refresh(db_exam)
+    return db_exam

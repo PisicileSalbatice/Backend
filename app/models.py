@@ -47,14 +47,15 @@ class Exam(Base):
 
 # ExamRequest Model
 class ExamRequest(Base):
-    __tablename__ = "exam_requests"
+    __tablename__ = 'exam_requests'
 
     id = Column(Integer, primary_key=True, index=True)
-    student_id = Column(Integer, ForeignKey("students.id"))
-    professor_id = Column(Integer, ForeignKey("professors.id"))
-    exam_id = Column(Integer, ForeignKey("exams.id"))  # Link to specific exam
+    student_id = Column(Integer, ForeignKey('students.id'))
+    professor_id = Column(Integer, ForeignKey('professors.id'))
+    exam_id = Column(Integer, ForeignKey('exams.id'))  # Link to specific exam
     requested_date = Column(Date)
-    status = Column(String)  # "pending", "approved", or "rejected"
+    subject = Column(String)  # Am adăugat acest câmp
+    # Am eliminat câmpul `status`
 
     student = relationship("Student")
     professor = relationship("Professor")
