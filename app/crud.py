@@ -44,6 +44,21 @@ def create_exam_request(
     db.refresh(db_request)
     return db_request
 
+def get_exam_requests(db: Session, student_id: int = None, professor_id: int = None):
+    query = db.query(models.ExamRequest)
+    if student_id:
+        query = query.filter(models.ExamRequest.student_id == student_id)
+    if professor_id:
+        query = query.filter(models.ExamRequest.professor_id == professor_id)
+    return query.all()
+
+def update_exam_request_status(db: Session, request_id: int, status: str):
+    exam_request = db.query(models.ExamRequest).filter(models.ExamRequest.id == request_id).first()
+    if exam_request:
+        exam_request.status = status
+        db.commit()
+        db.refresh(exam_request)
+    return exam_request
 
 # Fetch all exams registered and managed by a specific professor
 def get_professor_exams(db: Session, professor_id: int) -> List[models.Exam]:

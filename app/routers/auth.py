@@ -75,3 +75,4 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
 def read_student_exams(current_user: models.User = Depends(get_current_user)):
     # Endpoint logic for authorized users
     return {"msg": "Authorized access to student exams"}
+

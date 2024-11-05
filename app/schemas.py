@@ -32,14 +32,31 @@ class ExamCreate(BaseModel):
     date: date
     professor_id: int
 
+    class Config:
+        orm_mode = True
+
+
+class ExamRequest(BaseModel):
+    id: int
+    student_id: int
+    professor_id: int
+    exam_id: int
+    requested_date: date
+    subject: str 
+
+    class Config:
+        orm_mode = True
 
 class ExamRequestCreate(BaseModel):
     student_id: int
     professor_id: int
-    subject: str
+    exam_id: int
     requested_date: date
+    subject: str  # Include subject field to match the model
 
-
+    class Config:
+        from_attributes = True
+        
 class SettingsUpdate(BaseModel):
     notificationPreferences: Optional[str] = None
     language: Optional[str] = None
