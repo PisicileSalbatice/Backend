@@ -4,9 +4,10 @@ from typing import List
 from app import models, schemas, crud, notifications
 from app.database import get_db
 from app.routers.auth import get_current_user, authenticate_user
-
+import logging
 router = APIRouter(prefix="/exams", tags=["exams"])
-
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 # Obține toate examenele
 @router.get("/", response_model=List[schemas.Exam])
 def get_exams(db: Session = Depends(get_db)):
@@ -21,23 +22,22 @@ def create_exam(exam: schemas.ExamCreate, db: Session = Depends(get_db)):
 @router.post("/requests/", response_model=schemas.ExamRequest)
 def create_exam_request(
     request: schemas.ExamRequestCreate,
-    email: str = Query(..., description="User's email"),
-    password: str = Query(..., description="User's password"),
+    email: str,
+    password: str,
     db: Session = Depends(get_db),
 ):
-    # Authenticate user
-    current_user = authenticate_user(email, password, db)
-    if not current_user:
-        raise HTTPException(status_code=401, detail="Invalid credentials")
+    logger.debug("Endpoint reached")
+    try:
+        current_user = get_current_user(email, password, db)
+        logger.debug(f"Authenticated user: {current_user}")
 
-    if current_user.role != "student":
-        raise HTTPException(status_code=403, detail="Only students can create exam requests")
+        exam_request = crud.create_exam_request(db=db, request=request)
+        logger.debug(f"Exam request created: {exam_request}")
 
-    # Create the exam request
-    exam_request = crud.create_exam_request(db=db, request=request)
-    if not exam_request:
-        raise HTTPException(status_code=400, detail="Exam request could not be created")
-    return exam_request
+        return exam_request
+    except Exception as e:
+        logger.error(f"Internal Server Error: {e}")
+        raise HTTPException(status_code=500, detail=f"Internal Server Error: {e}")
 
 
 # Obține cererile de examen

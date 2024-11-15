@@ -3,7 +3,7 @@ from . import models, schemas
 from typing import List, Optional
 from datetime import datetime
 from app.models import ExamRequest
-
+from fastapi import HTTPException
 # Login: checks email and password
 def login_user(db: Session, email: str, password: str) -> Optional[models.User]:
     return (
@@ -29,20 +29,26 @@ def get_student_exams(db: Session, student_id: int) -> List[models.Exam]:
 
 
 # Create an exam request for a student
-def create_exam_request(
-    db: Session, request: schemas.ExamRequestCreate
-) -> models.ExamRequest:
-    db_request = models.ExamRequest(
-        student_id=request.student_id,
-        professor_id=request.professor_id,
-        exam_id=request.exam_id,  # Link to a specific exam
-        requested_date=request.requested_date,
-        status="pending",
-    )
-    db.add(db_request)
-    db.commit()
-    db.refresh(db_request)
-    return db_request
+def create_exam_request(db: Session, request: schemas.ExamRequestCreate):
+    try:
+        print(f"Request received: {request}")
+        db_request = models.ExamRequest(
+            student_id=request.student_id,
+            professor_id=request.professor_id,
+            exam_id=request.exam_id,
+            requested_date=request.requested_date,
+            subject=request.subject,
+        )
+        db.add(db_request)
+        db.commit()
+        db.refresh(db_request)
+        print(f"Exam request created: {db_request}")
+        return db_request
+    except Exception as e:
+        print(f"Error in create_exam_request: {e}")
+        raise HTTPException(status_code=500, detail=f"Database error: {e}")
+
+
 
 def get_exam_requests(db: Session, student_id: int = None, professor_id: int = None):
     query = db.query(models.ExamRequest)

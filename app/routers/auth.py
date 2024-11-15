@@ -42,15 +42,17 @@ def login_for_access_token(form_data: schemas.LoginRequest, db: Session = Depend
 
 
 def get_current_user(
-    email: str = Query(..., description="The user's email"),
-    password: str = Query(..., description="The user's password"),
-    db: Session = Depends(get_db),
+    email: str, password: str, db: Session = Depends(get_db)
 ):
+    print(f"Authenticating user with email: {email}, password: {password}")
     user = authenticate_user(email, password, db)
     if not user:
+        print("Authentication failed!")
         raise HTTPException(
             status_code=401,
             detail="Invalid email or password",
         )
+    print(f"Authenticated user: {user}")
     return user
+
 
