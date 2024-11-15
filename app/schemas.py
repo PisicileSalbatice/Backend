@@ -4,14 +4,15 @@ from typing import Optional
 
 
 class Exam(BaseModel):
-    id: str
+    id: int  # `str` schimbat în `int` pentru consistență cu baza de date
     subject: str
-    date: str
-    professorId: str
-    studentId: Optional[str] = None
+    date: date  # `str` schimbat în `date` pentru a reflecta tipul real
+    professor_id: int  # Schimbare din `professorId` în `professor_id` pentru consistență
+    #student_id: Optional[int] = None  # Adăugare pentru a se alinia cu `ExamRequest`
 
     class Config:
         orm_mode = True
+
 
 
 class StudentCreate(BaseModel):
@@ -45,14 +46,14 @@ class ExamRequest(BaseModel):
     subject: str 
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class ExamRequestCreate(BaseModel):
     student_id: int
     professor_id: int
     exam_id: int
     requested_date: date
-    subject: str  # Include subject field to match the model
+    subject: str  
 
     class Config:
         from_attributes = True
@@ -71,4 +72,4 @@ class LoginRequest(BaseModel):
 
 class LoginResponse(BaseModel):
     access_token: str
-    token_type: str 
+    token_type: str

@@ -1,9 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from typing import List
 from app import models, schemas, crud, notifications
 from app.database import get_db
-from app.routers.auth import get_current_user 
+from app.routers.auth import get_current_user, authenticate_user
 
 router = APIRouter(prefix="/exams", tags=["exams"])
 
@@ -20,17 +20,25 @@ def create_exam(exam: schemas.ExamCreate, db: Session = Depends(get_db)):
 # Creare cerere de examen
 @router.post("/requests/", response_model=schemas.ExamRequest)
 def create_exam_request(
-    request: schemas.ExamRequestCreate, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)
+    request: schemas.ExamRequestCreate,
+    email: str = Query(..., description="User's email"),
+    password: str = Query(..., description="User's password"),
+    db: Session = Depends(get_db),
 ):
-    # Verifică dacă utilizatorul este student
+    # Authenticate user
+    current_user = authenticate_user(email, password, db)
+    if not current_user:
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+
     if current_user.role != "student":
         raise HTTPException(status_code=403, detail="Only students can create exam requests")
 
-    # Creează cererea
+    # Create the exam request
     exam_request = crud.create_exam_request(db=db, request=request)
     if not exam_request:
         raise HTTPException(status_code=400, detail="Exam request could not be created")
     return exam_request
+
 
 # Obține cererile de examen
 @router.get("/requests/", response_model=List[schemas.ExamRequest])
@@ -70,3 +78,7 @@ def update_exam_request_status(
     notifications.notify_student_of_status(updated_request.student.email, status)
 
     return {"message": f"Statusul cererii a fost actualizat la {status}", "status": status}
+
+
+
+
