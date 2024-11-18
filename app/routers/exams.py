@@ -46,16 +46,12 @@ def get_exam_requests(
     student_id: int = None,
     professor_id: int = None,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user)
 ):
-    # Verifică dacă utilizatorul este profesor
-    if current_user.role != "professor":
-        raise HTTPException(status_code=403, detail="Only professors can view exam requests")
-
-    exam_requests = crud.get_exam_requests(db=db, professor_id=current_user.id)
-    if not exam_requests:
+    print(f"Student ID: {student_id}, Professor ID: {professor_id}")
+    requests = crud.get_exam_requests(db=db, student_id=student_id, professor_id=professor_id)
+    if not requests:
         raise HTTPException(status_code=404, detail="No exam requests found")
-    return exam_requests
+    return requests
 
 # Actualizează starea cererii de examen
 @router.put("/requests/{request_id}/status")

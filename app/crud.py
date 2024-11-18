@@ -58,6 +58,7 @@ def get_exam_requests(db: Session, student_id: int = None, professor_id: int = N
         query = query.filter(models.ExamRequest.professor_id == professor_id)
     return query.all()
 
+
 def update_exam_request_status(db: Session, request_id: int, status: str) -> ExamRequest:
     exam_request = db.query(ExamRequest).filter(ExamRequest.id == request_id).first()
     if exam_request:
