@@ -76,5 +76,35 @@ def update_exam_request_status(
     return {"message": f"Statusul cererii a fost actualizat la {status}", "status": status}
 
 
+@router.delete("/requests/{request_id}", status_code=204)
+def delete_exam_request(
+    request_id: int,
+    email: str,
+    password: str,
+    db: Session = Depends(get_db)
+):
+    # Obține profesorul curent
+    user = authenticate_user(email, password, db)
+    if not user:
+        raise HTTPException(status_code=401, detail="Invalid email or password")
+
+    if user.role != "professor":
+        raise HTTPException(status_code=403, detail="Only professors can delete exam requests")
+
+    # Verifică dacă cererea de examen există
+    exam_request = db.query(models.ExamRequest).filter(models.ExamRequest.id == request_id).first()
+    if not exam_request:
+        raise HTTPException(status_code=404, detail="Exam request not found")
+
+    # Verifică dacă profesorul curent este asociat cu cererea de examen
+    if exam_request.professor_id != user.id:
+        raise HTTPException(status_code=403, detail="You do not have permission to delete this request")
+
+    # Șterge cererea din baza de date
+    db.delete(exam_request)
+    db.commit()
+
+    return {"detail": "Exam request deleted successfully"}
+
 
 

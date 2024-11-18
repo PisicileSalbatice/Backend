@@ -55,4 +55,21 @@ def get_current_user(
     print(f"Authenticated user: {user}")
     return user
 
+def get_current_user_student(email: str, password: str, db: Session):
+    # Verifică autentificarea utilizatorului
+    user = authenticate_user(email, password, db)
+    if not user:
+        raise HTTPException(status_code=401, detail="Invalid email or password")
+
+    # Verifică dacă utilizatorul este student
+    if user.role != "student":
+        raise HTTPException(status_code=403, detail="Only students can access this resource")
+
+    # Obține studentul asociat pe baza email-ului
+    student = db.query(models.Student).filter(models.Student.email == user.email).first()
+    if not student:
+        raise HTTPException(status_code=404, detail="Student not found for the user")
+
+    return student
+
 
