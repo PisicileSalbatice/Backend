@@ -4,6 +4,7 @@ from typing import List, Optional
 from datetime import datetime
 from app.models import ExamRequest
 from fastapi import HTTPException
+
 # Login: checks email and password
 def login_user(db: Session, email: str, password: str) -> Optional[models.User]:
     return (
@@ -36,6 +37,7 @@ def create_exam_request(db: Session, request: schemas.ExamRequestCreate):
             student_id=request.student_id,
             professor_id=request.professor_id,
             exam_id=request.exam_id,
+            classroom_id=request.classroom_id,  # Atribuim sala
             requested_date=request.requested_date,
             subject=request.subject,
         )
@@ -148,3 +150,7 @@ def create_exam(db: Session, exam: schemas.ExamCreate):
     db.commit()
     db.refresh(db_exam)
     return db_exam
+
+
+
+

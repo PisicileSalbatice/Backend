@@ -26,6 +26,9 @@ class ProfessorCreate(BaseModel):
     first_name: str
     last_name: str
     email: str
+    phone_number: str
+    faculty_name: str
+    department_name: str
 
 
 class ExamCreate(BaseModel):
@@ -52,8 +55,9 @@ class ExamRequestCreate(BaseModel):
     student_id: int
     professor_id: int
     exam_id: int
+    classroom_id: int  # Adăugăm acest câmp
     requested_date: date
-    subject: str  
+    subject: str
 
     class Config:
         from_attributes = True

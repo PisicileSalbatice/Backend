@@ -24,11 +24,15 @@ class Student(Base):
 
 
 class Professor(Base):
-    __tablename__ = "professors"
+    __tablename__ = 'professors'
+
     id = Column(Integer, primary_key=True, index=True)
-    first_name = Column(String, index=True)
-    last_name = Column(String, index=True)
-    email = Column(String, unique=True, index=True)
+    first_name = Column(String, nullable=False)
+    last_name = Column(String, nullable=False)
+    email = Column(String, nullable=False)
+    phone_number = Column(String, nullable=True)  # Asigură-te că acest câmp există
+    faculty_name = Column(String, nullable=True)
+    department_name = Column(String, nullable=True)
     user_id = Column(Integer, ForeignKey("users.id"))
     user = relationship("User")
 
@@ -53,10 +57,20 @@ class ExamRequest(Base):
     student_id = Column(Integer, ForeignKey('students.id'))
     professor_id = Column(Integer, ForeignKey('professors.id'))
     exam_id = Column(Integer, ForeignKey('exams.id'))  # Link to specific exam
+    classroom_id = Column(Integer, ForeignKey('classrooms.id'))  # Adăugăm această linie
     requested_date = Column(Date)
-    subject = Column(String)  # Am adăugat acest câmp
-    # Am eliminat câmpul `status`
+    subject = Column(String)  # Am păstrat acest câmp
 
     student = relationship("Student")
     professor = relationship("Professor")
     exam = relationship("Exam")
+    classroom = relationship("Classroom")  # Adăugăm relația către clasă
+
+
+class Classroom(Base):
+    __tablename__ = "classrooms"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(255), nullable=False)
+    short_name = Column(String(50), nullable=False)
+    building_name = Column(String(50), nullable=False)
