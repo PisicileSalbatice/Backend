@@ -1,6 +1,7 @@
 from sqlalchemy import Column, String, Integer, ForeignKey, Date
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, Session
 from .database import Base
+from datetime import date
 
 
 # Base User Model for Authentication
@@ -56,16 +57,39 @@ class ExamRequest(Base):
     id = Column(Integer, primary_key=True, index=True)
     student_id = Column(Integer, ForeignKey('students.id'))
     professor_id = Column(Integer, ForeignKey('professors.id'))
-    exam_id = Column(Integer, ForeignKey('exams.id'))  # Link to specific exam
-    classroom_id = Column(Integer, ForeignKey('classrooms.id'))  # Adăugăm această linie
+    classroom_id = Column(Integer, ForeignKey('classrooms.id'))
     requested_date = Column(Date)
-    subject = Column(String)  # Am păstrat acest câmp
+    subject = Column(String)
 
     student = relationship("Student")
     professor = relationship("Professor")
-    exam = relationship("Exam")
-    classroom = relationship("Classroom")  # Adăugăm relația către clasă
+    classroom = relationship("Classroom")
 
+    @staticmethod
+    def create_request_with_exam(db: Session, student_id: int, professor_id: int, classroom_id: int, requested_date: date, subject: str):
+        # Creăm un nou examen
+        new_exam = Exam(
+            subject=subject,
+            date=requested_date,
+            professor_id=professor_id
+        )
+        db.add(new_exam)
+        db.commit()
+        db.refresh(new_exam)
+
+        # Creăm un request folosind `exam_id` generat
+        new_request = ExamRequest(
+            student_id=student_id,
+            professor_id=professor_id,
+            classroom_id=classroom_id,
+            requested_date=requested_date,
+            subject=subject
+        )
+        db.add(new_request)
+        db.commit()
+        db.refresh(new_request)
+
+        return new_request
 
 class Classroom(Base):
     __tablename__ = "classrooms"

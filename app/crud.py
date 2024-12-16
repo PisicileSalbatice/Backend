@@ -32,23 +32,36 @@ def get_student_exams(db: Session, student_id: int) -> List[models.Exam]:
 # Create an exam request for a student
 def create_exam_request(db: Session, request: schemas.ExamRequestCreate):
     try:
-        print(f"Request received: {request}")
+        print(f"Received request: {request.dict()}")  # Log payload-ul primit
+
+        # Creăm un nou examen
+        new_exam = models.Exam(
+            subject=request.subject,
+            date=request.requested_date,
+            professor_id=request.professor_id
+        )
+        db.add(new_exam)
+        db.commit()
+        db.refresh(new_exam)
+
+        # Creăm cererea de examen
         db_request = models.ExamRequest(
             student_id=request.student_id,
             professor_id=request.professor_id,
-            exam_id=request.exam_id,
-            classroom_id=request.classroom_id,  # Atribuim sala
+            exam_id=new_exam.id,  # Folosim ID-ul generat pentru examen
+            classroom_id=request.classroom_id,
             requested_date=request.requested_date,
-            subject=request.subject,
+            subject=request.subject
         )
         db.add(db_request)
         db.commit()
         db.refresh(db_request)
-        print(f"Exam request created: {db_request}")
+
         return db_request
     except Exception as e:
         print(f"Error in create_exam_request: {e}")
         raise HTTPException(status_code=500, detail=f"Database error: {e}")
+
 
 
 

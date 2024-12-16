@@ -4,6 +4,9 @@ from typing import List
 from app import models, schemas, crud, notifications
 from app.database import get_db
 from app.routers.auth import get_current_user, authenticate_user
+from app.models import ExamRequest
+from app.notifications import notify_exam_request_created, notify_exam_request_status_updated
+
 import logging
 router = APIRouter(prefix="/exams", tags=["exams"])
 logging.basicConfig(level=logging.DEBUG)
@@ -26,17 +29,23 @@ def create_exam_request(
     password: str,
     db: Session = Depends(get_db),
 ):
-    logger.debug("Endpoint reached")
     try:
         current_user = get_current_user(email, password, db)
-        logger.debug(f"Authenticated user: {current_user}")
 
-        exam_request = crud.create_exam_request(db=db, request=request)
-        logger.debug(f"Exam request created: {exam_request}")
+        exam_request = ExamRequest.create_request_with_exam(
+            db=db,
+            student_id=request.student_id,
+            professor_id=request.professor_id,
+            classroom_id=request.classroom_id,
+            requested_date=request.requested_date,
+            subject=request.subject,
+        )
+
+        # Trimitere notificare pe email la cerere nouă
+        notify_exam_request_created(db, exam_request.id)
 
         return exam_request
     except Exception as e:
-        logger.error(f"Internal Server Error: {e}")
         raise HTTPException(status_code=500, detail=f"Internal Server Error: {e}")
 
 
@@ -70,8 +79,9 @@ def update_exam_request_status(
     if not updated_request:
         raise HTTPException(status_code=404, detail="Cererea de examen nu a fost găsită")
 
-    # Trimitem notificare studentului
+    # Trimitem notificare studentului și pe email către admin
     notifications.notify_student_of_status(updated_request.student.email, status)
+    notify_exam_request_status_updated(db, request_id, status)
 
     return {"message": f"Statusul cererii a fost actualizat la {status}", "status": status}
 

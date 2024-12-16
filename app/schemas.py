@@ -44,7 +44,6 @@ class ExamRequest(BaseModel):
     id: int
     student_id: int
     professor_id: int
-    exam_id: int
     requested_date: date
     subject: str 
 
@@ -54,13 +53,9 @@ class ExamRequest(BaseModel):
 class ExamRequestCreate(BaseModel):
     student_id: int
     professor_id: int
-    exam_id: int
-    classroom_id: int  # Adăugăm acest câmp
+    classroom_id: int
     requested_date: date
     subject: str
-
-    class Config:
-        from_attributes = True
 
 class SettingsUpdate(BaseModel):
     notificationPreferences: Optional[str] = None
