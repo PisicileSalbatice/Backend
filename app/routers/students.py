@@ -1,36 +1,44 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from app import models, schemas
-from app.database import get_db
-from typing import List, Optional
+from typing import List  # Importăm List pentru a specifica tipul returnat
+from ..database import get_db  # Importăm funcția get_db pentru a obține sesiunea de DB
+from ..crud import get_student_exams
+from ..routers.auth import authenticate_user, get_current_user_student
+from app import crud, schemas
+from ..schemas import Exam  # Importăm schema Exam pentru a specifica tipul de răspuns
+from app import models
+from app.schemas import UserDetails
+from sqlalchemy.orm import joinedload
+import logging
+logging.basicConfig(level=logging.DEBUG, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+logger = logging.getLogger(__name__)
+router = APIRouter()
 
-router = APIRouter(prefix="/students", tags=["students"])
 
-# Obține lista tuturor studenților
-@router.get("/", response_model=List[schemas.Student])
-def get_students(db: Session = Depends(get_db)):
+
+
+
+@router.get("/students", response_model=List[schemas.Student])
+def get_all_students(db: Session = Depends(get_db)):
+    """
+    Returnează toți studenții din baza de date.
+    """
     students = db.query(models.Student).all()
-    if not students:
-        raise HTTPException(status_code=404, detail="No students found")
-    return students
+    return [
+        {
+            "id": student.id,
+            "first_name": student.first_name,
+            "last_name": student.last_name,
+            "email": student.email,
+            "year_of_study": student.year_of_study,
+            "name": f"{student.first_name} {student.last_name}",
+            "role": "student",  # Poți adapta logica pentru a include rolul corect
+        }
+        for student in students
+    ]
 
-# Obține detaliile unui student pe baza ID-ului
-@router.get("/{student_id}", response_model=schemas.Student)
-def get_student(student_id: int, db: Session = Depends(get_db)):
-    student = db.query(models.Student).filter(models.Student.id == student_id).first()
-    if not student:
-        raise HTTPException(status_code=404, detail="Student not found")
-    return student
 
-# Creează un student nou
-@router.post("/", response_model=schemas.Student)
-def create_student(student: schemas.StudentCreate, db: Session = Depends(get_db)):
-    existing_student = db.query(models.Student).filter(models.Student.email == student.email).first()
-    if existing_student:
-        raise HTTPException(status_code=400, detail="Student with this email already exists")
 
-    new_student = models.Student(**student.dict())
-    db.add(new_student)
-    db.commit()
-    db.refresh(new_student)
-    return new_student
+
+
+

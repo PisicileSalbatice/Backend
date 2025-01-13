@@ -1,15 +1,15 @@
 from pydantic import BaseModel
 from datetime import date
 from typing import Optional
-
+import datetime
 
 class UserDetails(BaseModel):
     id: int
     name: str
     email: str
     role: str
-    password: str
-    
+    password: Optional[str] = None
+
     class Config:
         from_attributes = True
 
@@ -67,13 +67,16 @@ class ExamCreate(BaseModel):
 
 class ExamRequest(BaseModel):
     id: int
-    professor_id: int
-    requested_date: date  # Use `date` type here
+    student_id: int
     subject: str
-    student_id: Optional[int]
+    requested_date: datetime.date
+    status: str
+    professor_id: int
+    classroom_id: int
 
     class Config:
         orm_mode = True
+
 
 class ExamRequestCreate(BaseModel):
     student_id: int

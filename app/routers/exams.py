@@ -38,44 +38,29 @@ def create_exam_request(
     password: str,
     db: Session = Depends(get_db),
 ):
-    try:
-        # Obține utilizatorul curent
-        current_user = get_current_user(email, password, db)
+    current_user = get_current_user(email, password, db)
+    if not current_user or current_user.role != "student":
+        raise HTTPException(status_code=403, detail="Only students can create exam requests")
 
-        # Creează cererea de examen
-        exam_request = ExamRequest.create_request_with_exam(
-            db=db,
-            student_id=request.student_id,
-            professor_id=request.professor_id,
-            classroom_id=request.classroom_id,
-            requested_date=request.requested_date,
-            subject=request.subject,
-        )
+    # Verifică dacă studentul există
+    student = db.query(models.Student).filter(models.Student.id == request.student_id).first()
+    if not student:
+        raise HTTPException(status_code=404, detail="Student not found")
 
-        # Obține detalii despre student
-        student = db.query(models.Student).filter(models.Student.id == request.student_id).first()
-        if not student:
-            raise HTTPException(status_code=404, detail="Student not found")
+    # Creează cererea
+    exam_request = ExamRequest.create_request_with_exam(
+        db=db,
+        student_id=request.student_id,
+        professor_id=request.professor_id,
+        classroom_id=request.classroom_id,
+        requested_date=request.requested_date,
+        subject=request.subject,
+    )
 
-        response = schemas.ExamRequest(
-            id=exam_request.id,
-            student=schemas.UserDetails(
-                id=student.id,
-                name=f"{student.first_name} {student.last_name}",
-                email=student.email,
-                role="student",
-            ),
-            professor_id=exam_request.professor_id,
-            classroom_id=exam_request.classroom_id,
-            requested_date=exam_request.requested_date,
-            subject=exam_request.subject,
-        )
+    # Trimite notificare
+    notify_exam_request_created(db, exam_request.id)
+    return exam_request
 
-        # Notificări
-        notify_exam_request_created(db, exam_request.id)
-        return response
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Internal Server Error: {e}")
 
 
 
@@ -112,17 +97,36 @@ def get_exams_for_student(student_id: int, db: Session = Depends(get_db)):
     """
     Fetch all exam requests for a given student_id.
     """
-    # Query from the `exam_requests` table
+    # Obține toate cererile de examen pentru student
     exam_requests = db.query(models.ExamRequest).filter(models.ExamRequest.student_id == student_id).all()
-    
-    # Debug log to confirm results
+
+    # Debug log pentru confirmare
     logger.debug(f"Exam requests fetched for student_id {student_id}: {exam_requests}")
 
-    # Handle case when no exam requests are found
+    # Verifică dacă nu există cereri de examen
     if not exam_requests:
         raise HTTPException(status_code=404, detail="No exam requests found for the given student ID")
-    
-    return exam_requests
+
+    # Transformă rezultatele pentru a include toate câmpurile necesare
+    formatted_requests = [
+        {
+            "id": exam.id,
+            "student_id": exam.student_id,
+            "subject": exam.subject,
+            "requested_date": exam.requested_date,
+            "status": exam.status,
+            "professor_id": exam.professor_id,
+            "classroom_id": exam.classroom_id,
+        }
+        for exam in exam_requests
+    ]
+
+    return formatted_requests
+
+
+
+
+
 
 
 
@@ -206,7 +210,7 @@ def get_user_details(email: str, db: Session = Depends(get_db)):
             "name": f"{student.first_name} {student.last_name}",
             "email": student.email,
             "role": "student",
-            "password": student.user.password  # Adaugă parola din relația cu User
+            "password": student.user.password if student.user else None,  # Include parola
         }
 
     professor = db.query(models.Professor).filter(models.Professor.email == email).first()
@@ -216,8 +220,9 @@ def get_user_details(email: str, db: Session = Depends(get_db)):
             "name": f"{professor.first_name} {professor.last_name}",
             "email": professor.email,
             "role": "professor",
-            "password": professor.user.password  # Adaugă parola din relația cu User
+            "password": professor.user.password if professor.user else None,  # Include parola
         }
 
     raise HTTPException(status_code=404, detail="User not found")
+
 
