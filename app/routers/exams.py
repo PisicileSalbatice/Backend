@@ -206,6 +206,7 @@ def get_user_details(email: str, db: Session = Depends(get_db)):
             "name": f"{student.first_name} {student.last_name}",
             "email": student.email,
             "role": "student",
+            "password": student.user.password  # Adaugă parola din relația cu User
         }
 
     professor = db.query(models.Professor).filter(models.Professor.email == email).first()
@@ -215,6 +216,7 @@ def get_user_details(email: str, db: Session = Depends(get_db)):
             "name": f"{professor.first_name} {professor.last_name}",
             "email": professor.email,
             "role": "professor",
+            "password": professor.user.password  # Adaugă parola din relația cu User
         }
 
     raise HTTPException(status_code=404, detail="User not found")

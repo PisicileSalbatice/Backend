@@ -8,7 +8,8 @@ class UserDetails(BaseModel):
     name: str
     email: str
     role: str
-
+    password: str
+    
     class Config:
         from_attributes = True
 
